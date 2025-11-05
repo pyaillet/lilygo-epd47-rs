@@ -9,6 +9,8 @@ use esp_backtrace as _;
 use esp_hal::{delay::Delay, main};
 use lilygo_epd47::{pin_config, Display};
 
+esp_bootloader_esp_idf::esp_app_desc!();
+
 #[main]
 fn main() -> ! {
     let peripherals = esp_hal::init(esp_hal::Config::default());
@@ -29,7 +31,7 @@ fn main() -> ! {
     let delay = Delay::new();
     display.power_on();
     delay.delay_millis(10);
-    display.repair(delay).unwrap();
+    display.repair(delay).expect("Unable to repair display");
     display.power_off();
 
     loop {}

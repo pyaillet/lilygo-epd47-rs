@@ -25,6 +25,8 @@ use lilygo_epd47::{pin_config, Display, DrawMode};
 use tinybmp::Bmp;
 use u8g2_fonts::U8g2TextStyle;
 
+esp_bootloader_esp_idf::esp_app_desc!();
+
 #[main]
 fn main() -> ! {
     esp_println::logger::init_logger_from_env();

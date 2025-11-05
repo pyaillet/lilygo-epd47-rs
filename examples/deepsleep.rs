@@ -30,6 +30,8 @@ use u8g2_fonts::FontRenderer;
 
 static FONT: FontRenderer = FontRenderer::new::<u8g2_fonts::fonts::u8g2_font_spleen16x32_mr>();
 
+esp_bootloader_esp_idf::esp_app_desc!();
+
 #[ram(unstable(rtc_fast))]
 static mut CYCLE: u16 = 0;
 

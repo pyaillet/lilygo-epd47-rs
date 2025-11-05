@@ -1,5 +1,5 @@
 use esp_hal::{
-    dma::{DmaChannel, DmaTxBuf},
+    dma::DmaTxBuf,
     dma_buffers,
     gpio::{Level, Output, OutputConfig, OutputPin},
     lcd_cam::{
@@ -20,7 +20,7 @@ struct ConfigRegister {
     pos_power_enable: bool,
     neg_power_enable: bool,
     stv: bool,
-    power_enable: bool, /* scan_direction, see https://github.com/vroland/epdiy/blob/main/src/board/epd_board_lilygo_t5_47.c#L199 */
+    scan_direction: bool, /* scan_direction, see https://github.com/vroland/epdiy/blob/main/src/board/epd_board_lilygo_t5_47.c#L199 */
     mode: bool,
     output_enable: bool,
 }
@@ -33,7 +33,7 @@ impl Default for ConfigRegister {
             pos_power_enable: false,
             neg_power_enable: false,
             stv: true,
-            power_enable: false,
+            scan_direction: false,
             mode: false,
             output_enable: false,
         }
@@ -61,7 +61,7 @@ impl<'a> ConfigWriter<'a> {
         self.pin_str.set_low();
         self.write_bool(self.config.output_enable);
         self.write_bool(self.config.mode);
-        self.write_bool(self.config.power_enable);
+        self.write_bool(self.config.scan_direction);
         self.write_bool(self.config.stv);
         self.write_bool(self.config.neg_power_enable);
         self.write_bool(self.config.pos_power_enable);
@@ -82,14 +82,14 @@ impl<'a> ConfigWriter<'a> {
 }
 
 pub struct PinConfig<'a> {
-    pub data0: peripherals::GPIO6<'a>,
-    pub data1: peripherals::GPIO7<'a>,
-    pub data2: peripherals::GPIO4<'a>,
-    pub data3: peripherals::GPIO5<'a>,
-    pub data4: peripherals::GPIO2<'a>,
-    pub data5: peripherals::GPIO3<'a>,
-    pub data6: peripherals::GPIO8<'a>,
-    pub data7: peripherals::GPIO1<'a>,
+    pub data0: peripherals::GPIO8<'a>,
+    pub data1: peripherals::GPIO1<'a>,
+    pub data2: peripherals::GPIO2<'a>,
+    pub data3: peripherals::GPIO3<'a>,
+    pub data4: peripherals::GPIO4<'a>,
+    pub data5: peripherals::GPIO5<'a>,
+    pub data6: peripherals::GPIO6<'a>,
+    pub data7: peripherals::GPIO7<'a>,
     pub cfg_data: peripherals::GPIO13<'a>,
     pub cfg_clk: peripherals::GPIO12<'a>,
     pub cfg_str: peripherals::GPIO0<'a>,
@@ -108,12 +108,10 @@ pub(crate) struct ED047TC1<'a> {
 impl<'a> ED047TC1<'a> {
     pub(crate) fn new(
         pins: PinConfig<'a>,
-        channel: peripherals::DMA_CH0<'a>,
+        dma: peripherals::DMA_CH0<'a>,
         lcd_cam: peripherals::LCD_CAM<'a>,
         rmt: peripherals::RMT<'a>,
     ) -> crate::Result<Self> {
-        let (_, channel_tx) = channel.split();
-
         // init lcd
         let lcd_cam = LcdCam::new(lcd_cam);
 
@@ -132,8 +130,8 @@ impl<'a> ED047TC1<'a> {
             .with_cd_data_edge(false);
         let ctrl = ED047TC1 {
             i8080: Some(
-                i8080::I8080::new(lcd_cam.lcd, channel_tx, config)
-                    .unwrap()
+                i8080::I8080::new(lcd_cam.lcd, dma, config)
+                    .expect("Unable to create i8080")
                     .with_dc(pins.lcd_dc)
                     .with_wrx(pins.lcd_wrx)
                     .with_data0(pins.data0)
@@ -153,7 +151,7 @@ impl<'a> ED047TC1<'a> {
     }
 
     pub(crate) fn power_on(&mut self) {
-        self.cfg_writer.config.power_enable = true;
+        self.cfg_writer.config.scan_direction = true;
         self.cfg_writer.config.power_disable = false;
         self.cfg_writer.write();
         busy_delay(100 * 240);
@@ -168,7 +166,6 @@ impl<'a> ED047TC1<'a> {
     }
 
     pub(crate) fn power_off(&mut self) {
-        self.cfg_writer.config.power_enable = false;
         self.cfg_writer.config.pos_power_enable = false;
         self.cfg_writer.write();
         busy_delay(10 * 240);
@@ -176,8 +173,7 @@ impl<'a> ED047TC1<'a> {
         self.cfg_writer.write();
         busy_delay(100 * 240);
         self.cfg_writer.config.power_disable = true;
-        self.cfg_writer.config.mode = false;
-        // self.cfg_writer.write();
+        self.cfg_writer.write();
         self.cfg_writer.config.stv = false;
         self.cfg_writer.write();
     }
@@ -186,23 +182,20 @@ impl<'a> ED047TC1<'a> {
         self.cfg_writer.config.mode = true;
         self.cfg_writer.write();
 
-        self.rmt.pulse(10, 10, true)?;
+        self.rmt.pulse(1, 1, true)?;
 
         self.cfg_writer.config.stv = false;
         self.cfg_writer.write();
 
-        self.rmt.pulse(10000, 1000, false)?;
+        busy_delay(100 * 240);
+        self.rmt.pulse(10, 10, true)?;
         self.cfg_writer.config.stv = true;
         self.cfg_writer.write();
-        // self.rmt.pulse(0, 100, true)?;
-        self.rmt.pulse(10, 10, true)?;
-        self.rmt.pulse(10, 10, true)?;
-        self.rmt.pulse(10, 10, true)?;
-        self.rmt.pulse(10, 10, true)?;
+        self.rmt.pulse(0, 10, true)?;
 
         self.cfg_writer.config.output_enable = true;
         self.cfg_writer.write();
-        self.rmt.pulse(10, 10, true)?;
+        self.rmt.pulse(1, 1, true)?;
 
         Ok(())
     }

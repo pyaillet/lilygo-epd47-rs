@@ -15,6 +15,8 @@ use u8g2_fonts::FontRenderer;
 
 static FONT: FontRenderer = FontRenderer::new::<u8g2_fonts::fonts::u8g2_font_spleen32x64_mr>();
 
+esp_bootloader_esp_idf::esp_app_desc!();
+
 #[main]
 fn main() -> ! {
     esp_println::logger::init_logger_from_env();
@@ -37,7 +39,7 @@ fn main() -> ! {
     delay.delay_millis(100);
     display.power_on();
     delay.delay_millis(10);
-    display.clear().unwrap();
+    display.clear().expect("Unable to clear display");
 
     let mut counter = 0;
     loop {
@@ -56,15 +58,21 @@ fn main() -> ! {
                 },
                 &mut display,
             )
-            .unwrap();
+            .expect("Unable to render on display");
 
-        display.flush(DrawMode::BlackOnWhite).unwrap();
+        display
+            .flush(DrawMode::BlackOnWhite)
+            .expect("Unable to flush");
         counter += 1;
         delay.delay_millis(1000);
         // clear rect
         if let Some(rect) = rect {
-            display.fill_solid(&rect, Gray4::WHITE).unwrap();
-            display.flush(DrawMode::WhiteOnBlack).unwrap();
+            display
+                .fill_solid(&rect, Gray4::WHITE)
+                .expect("Unable to fill");
+            display
+                .flush(DrawMode::WhiteOnBlack)
+                .expect("Unable to flush");
         }
     }
 }

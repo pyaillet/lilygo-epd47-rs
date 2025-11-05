@@ -1,6 +1,7 @@
 use alloc::{boxed::Box, vec, vec::Vec};
 
 use esp_hal::{delay::Delay, peripherals};
+use log::*;
 
 use crate::{ed047tc1, Error, Result};
 
@@ -81,11 +82,13 @@ impl<'a> Display<'a> {
 
     /// Turn the display on.
     pub fn power_on(&mut self) {
+        debug!("Display power on");
         self.epd.power_on()
     }
 
     /// Turn the display off.
     pub fn power_off(&mut self) {
+        debug!("Display power off");
         self.epd.power_off()
     }
 
@@ -117,6 +120,7 @@ impl<'a> Display<'a> {
 
     /// Fill the whole framebuffer with the same color.
     pub fn fill(&mut self, color: u8) -> Result<()> {
+        debug!("display fill");
         if color > 0x0F {
             return Err(Error::InvalidColor);
         }
@@ -129,6 +133,7 @@ impl<'a> Display<'a> {
     /// method clears the framebuffer. The provided mode should match the
     /// contents of your framebuffer.
     pub fn flush(&mut self, mode: DrawMode) -> Result<()> {
+        debug!("display flush");
         self.draw(mode)?;
         self.tainted_rows.fill(0);
         self.framebuffer.fill(0xFF);
@@ -137,12 +142,14 @@ impl<'a> Display<'a> {
 
     /// Clears the screen.
     pub fn clear(&mut self) -> Result<()> {
+        debug!("display clear");
         self.clear_area(Self::BOUNDING_BOX)
     }
 
     /// Performs the screen repair routine as described here
     /// https://github.com/Xinyuan-LilyGO/LilyGo-EPD47/blob/master/examples/screen_repair/screen_repair.ino
     pub fn repair(&mut self, delay: Delay) -> Result<()> {
+        debug!("display repair");
         self.clear()?;
         for _ in 0..20 {
             self.push_pixels(Self::BOUNDING_BOX, 50, 0)?;

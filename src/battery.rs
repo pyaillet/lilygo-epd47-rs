@@ -40,7 +40,10 @@ where
 
     /// Read the current voltage of the battery
     pub fn read(&mut self) -> f32 {
-        let v = self.adc.read_oneshot(&mut self.adc_pin).unwrap();
+        let v = self
+            .adc
+            .read_oneshot(&mut self.adc_pin)
+            .expect("unable to read oneshot from adc");
 
         (((v as f32) * 2.0) / 1000.0) * self.correction_factor
     }

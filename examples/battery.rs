@@ -15,6 +15,8 @@ use u8g2_fonts::FontRenderer;
 
 static FONT: FontRenderer = FontRenderer::new::<u8g2_fonts::fonts::u8g2_font_spleen32x64_mr>();
 
+esp_bootloader_esp_idf::esp_app_desc!();
+
 #[main]
 fn main() -> ! {
     esp_println::logger::init_logger_from_env();
@@ -40,7 +42,7 @@ fn main() -> ! {
     delay.delay_millis(10);
 
     loop {
-        display.clear().unwrap();
+        display.clear().expect("Unable to clear display");
         FONT.render_aligned(
             format_args!("Voltage: {}V", battery.read()),
             Point::new(
@@ -55,9 +57,11 @@ fn main() -> ! {
             },
             &mut display,
         )
-        .unwrap();
+        .expect("Unable to render font");
 
-        display.flush(DrawMode::BlackOnWhite).unwrap();
+        display
+            .flush(DrawMode::BlackOnWhite)
+            .expect("Unable to flush display");
         delay.delay_millis(5000);
     }
 }

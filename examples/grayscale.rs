@@ -15,6 +15,8 @@ use esp_backtrace as _;
 use esp_hal::{delay::Delay, main};
 use lilygo_epd47::{pin_config, Display, DrawMode};
 
+esp_bootloader_esp_idf::esp_app_desc!();
+
 #[main]
 fn main() -> ! {
     esp_println::logger::init_logger_from_env();
@@ -35,7 +37,7 @@ fn main() -> ! {
     let delay = Delay::new();
     display.power_on();
     delay.delay_millis(10);
-    display.clear().unwrap();
+    display.clear().expect("Unable to clear display");
 
     loop {
         let height = display.bounding_box().size.height / 16;
@@ -50,14 +52,16 @@ fn main() -> ! {
                     .build(),
             )
             .draw(&mut display)
-            .unwrap();
+            .expect("Unable to draw on display");
         }
 
-        display.flush(DrawMode::BlackOnWhite).unwrap();
+        display
+            .flush(DrawMode::BlackOnWhite)
+            .expect("Unable to flush on display");
 
         delay.delay_millis(5000);
 
-        display.clear().unwrap();
+        display.clear().expect("Unable to clear display");
 
         let width = display.bounding_box().size.width / 16;
         for shade in 0x0..0x0F {
@@ -71,13 +75,15 @@ fn main() -> ! {
                     .build(),
             )
             .draw(&mut display)
-            .unwrap();
+            .expect("Unable to draw on display");
         }
 
-        display.flush(DrawMode::BlackOnWhite).unwrap();
+        display
+            .flush(DrawMode::BlackOnWhite)
+            .expect("Unable to draw black on white");
 
         delay.delay_millis(5000);
 
-        display.clear().unwrap();
+        display.clear().expect("Unable to clear display");
     }
 }
