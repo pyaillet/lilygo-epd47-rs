@@ -38,7 +38,7 @@ struct ConfigRegister {
     pos_power_enable: bool,
     neg_power_enable: bool,
     stv: bool,
-    scan_direction: bool, /* scan_direction, see https://github.com/vroland/epdiy/blob/main/src/board/epd_board_lilygo_t5_47.c#L199 */
+    power_enable: bool, /* scan_direction, see https://github.com/vroland/epdiy/blob/main/src/board/epd_board_lilygo_t5_47.c#L199 */
     mode: bool,
     output_enable: bool,
 }
@@ -51,7 +51,7 @@ impl Default for ConfigRegister {
             pos_power_enable: false,
             neg_power_enable: false,
             stv: true,
-            scan_direction: false,
+            power_enable: false,
             mode: false,
             output_enable: false,
         }
@@ -79,7 +79,7 @@ impl<'a> ConfigWriter<'a> {
         self.pin_str.set_low();
         self.write_bool(self.config.output_enable);
         self.write_bool(self.config.mode);
-        self.write_bool(self.config.scan_direction);
+        self.write_bool(self.config.power_enable);
         self.write_bool(self.config.stv);
         self.write_bool(self.config.neg_power_enable);
         self.write_bool(self.config.pos_power_enable);
@@ -170,7 +170,7 @@ impl<'a> ED047TC1<'a> {
     }
 
     pub(crate) fn power_on(&mut self) {
-        self.cfg_writer.config.scan_direction = true;
+        self.cfg_writer.config.power_enable = true;
         self.cfg_writer.config.power_disable = false;
         self.cfg_writer.write();
         busy_delay(100 * 240);
