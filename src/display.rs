@@ -193,6 +193,13 @@ impl<'a> Display<'a> {
         self.clear_cycles(area, 4, 50)
     }
 
+    pub fn fast_clear(&mut self) -> Result<()> {
+        self.push_pixels(Self::BOUNDING_BOX, 50, 0)?;
+        self.push_pixels(Self::BOUNDING_BOX, 50, 0)?;
+        self.push_pixels(Self::BOUNDING_BOX, 50, 1)?;
+        self.push_pixels(Self::BOUNDING_BOX, 50, 1)
+    }
+
     fn clear_cycles(&mut self, area: Rectangle, cycles: u16, cycle_time: u16) -> Result<()> {
         for _ in 0..cycles {
             for _ in 0..4 {
